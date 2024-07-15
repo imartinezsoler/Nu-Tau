@@ -2,6 +2,7 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 from fluxes import Astrf
+import tauNN
 
 
 """ SK/HK part """
@@ -181,14 +182,16 @@ with h5py.File(
     cosz_reco = np.asarray(hf["recodirZ"])
     cosz_true = np.asarray(hf["dirnuZ"])
     current = np.array(hf["current"][()]).astype(str)
+    taunn = np.zeros_like(ereco)
 
 
-""" Astro Flux """
-
-
-def Astrf(ene, gamma=-2.37):
-    flux = 4 * np.pi * (1.44e-18) * (np.power(ene / 1e5, gamma))
-    return flux
+mre = (sample==10) | (sample==11) | (sample==13)
+tau = (np.abs(ipnu)==16) & (current == "CC")
+notau = np.logical_not(tau)
+cut = mre & notau
+taunn[cut] = tauNN.get_bkg(np.sum(cut))
+cut = mre & tau
+taunn[cut] = tauNN.get_sig(np.sum(cut))
 
 
 """ Prompt flux """
