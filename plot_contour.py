@@ -18,7 +18,7 @@ df = pd.read_csv('MESE_pp.csv', sep=", ")
 plt.plot(df['gamma'], df['norm'], label='MESE fit', color="cyan", linestyle="--")  # Change 'x' and 'y' to your actual column names
 
 # Load the CSV file
-df = pd.read_csv('systs_fit_n=1_g=-2.6_Tau_Ebin9.csv', sep=", ")
+df = pd.read_csv('stats_fit_n=1_g=-2.6_1-1-1_cutoff=20GeV_Tau_Ebin9.csv', sep=", ")
 # df = pd.read_csv("stats_fit_n=0_noTau_noEbin.csv", sep=", ")
 true_norm = 1.0
 true_gamma = 2.6

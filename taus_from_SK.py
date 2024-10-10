@@ -191,15 +191,25 @@ class HK:
             13: "sk1-5_fc_multigev_multiring_other",
             14: "sk1-5_pc_stop",
             15: "sk1-5_pc_thru",
+            9: "sk1-3_fc_multigev_1ring_mulike",
+            12: "sk1-5_fc_multigev_multiring_mulike",
+            16: "sk1-5_upmu_stop",
+            17: "sk1-5_upmu_thru_nonshowering",
+            18: "sk1-5_upmu_thru_showering",
         }
         self.hk_tau_sample_names = {
             7: r"HK FC multigev 1ring $\nu_{e}$-like",
             8: r"HK FC multigev 1ring $\overline{\nu_{e}}$-like",
+            9: r"HK FC multigev 1ring $\mu$-like",
             10: r"HK FC multigev multiring $\nu_{e}$-like",
             11: r"HK FC multigev multiring $\overline{\nu_{e}}$-like",
+            12: r"HK FC multigev multiring $\mu$-like",
             13: "HK FC multigev multiring other",
             14: "HK PC stop",
             15: "HK PC thru",
+            16: "HK PC thru",
+            17: "HK UPMºU",
+            18: "HK PC thru",
         }
 
         # Exposure in units of HK years, i.e. 188 kton
@@ -213,11 +223,16 @@ class HK:
         self.tau_sample_exposure = {
             7: hk_years * hk_scale * 365.25 / sk123_days / how_much_skmc,
             8: hk_years * hk_scale * 365.25 / sk123_days / how_much_skmc,
+            9: hk_years * hk_scale * 365.25 / sk123_days / how_much_skmc,
             10: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
             11: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
+            12: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
             13: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
             14: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
             15: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
+            16: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
+            17: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
+            18: hk_years * hk_scale * 365.25 / sk_days / how_much_skmc,
         }
 
         with h5py.File(
@@ -238,7 +253,7 @@ class HK:
 
 
         """ remove samples irrelevant for the analysis """
-        sample_cut = (self.sample == 7) | (self.sample == 8) | (self.sample == 10) | (self.sample == 11) | (self.sample == 13) | (self.sample == 14) | (self.sample == 15)
+        sample_cut = (self.sample == 7) | (self.sample == 8) | (self.sample == 10) | (self.sample == 11) | (self.sample == 13) | (self.sample == 14) | (self.sample == 15) | (self.sample == 16) | (self.sample == 17) | (self.sample == 18) | (self.sample == 9) | (self.sample == 12)
         self.pnu = self.pnu[sample_cut]
         self.ipnu = self.ipnu[sample_cut]
         self.ereco = self.ereco[sample_cut]
@@ -341,7 +356,7 @@ class HK:
         dw[anticut] *= 1/x
         return dw
 
-    def binned(self, norm, gamma, tauNN, bins, w_all=None, w_atm=None):
+    def binned(self, norm, gamma, fraction, tauNN, bins, w_all=None, w_atm=None):
         if (w_all is None) and (w_atm is None):
             w_all = np.ones(self.entries)
             w_atm = np.ones(self.entries)
@@ -411,7 +426,10 @@ class HK:
                         taunccut = (
                             cut & (np.abs(self.ipnu) == 16) & (self.current != "CC")
                         )
+                        enccut = cut & (np.abs(self.ipnu) == 12) & (self.current != "CC")
+                        munccut = cut & (np.abs(self.ipnu) == 14) & (self.current != "CC")
                         nccut = cut & (self.current != "CC")
+
                         dweights = np.zeros(self.entries)
                         dweights[nccut] += (
                             w_atm[nccut] * w_all[nccut] * self.w_oscbf[nccut] * self.tau_sample_exposure[s_id]
@@ -425,14 +443,35 @@ class HK:
                         dweights[taucut] += (
                             w_atm[taucut] * w_all[taucut] * self.w_oscbf[taucut] * self.tau_sample_exposure[s_id]
                         )
+                        
                         dweights[taunccut] += (
                             w_all[taunccut] * self.weight[taunccut]
-                            * Astrf(self.pnu[taunccut], norm=norm, gamma=gamma)
+                            * Astrf(self.pnu[taunccut], norm=norm, gamma=gamma, fraction=fraction[2])
                             * self.tau_sample_exposure[s_id]
                         )
                         dweights[taucut] += (
                             w_all[taucut] * self.weight[taucut]
-                            * Astrf(self.pnu[taucut], norm=norm, gamma=gamma)
+                            * Astrf(self.pnu[taucut], norm=norm, gamma=gamma, fraction=fraction[2])
+                            * self.tau_sample_exposure[s_id]
+                        )
+                        dweights[enccut] += (
+                            w_all[enccut] * self.weight[enccut]
+                            * Astrf(self.pnu[enccut], norm=norm, gamma=gamma, fraction=fraction[0])
+                            * self.tau_sample_exposure[s_id]
+                        )
+                        dweights[ecut] += (
+                            w_all[ecut] * self.weight[ecut]
+                            * Astrf(self.pnu[ecut], norm=norm, gamma=gamma, fraction=fraction[0])
+                            * self.tau_sample_exposure[s_id]
+                        )
+                        dweights[munccut] += (
+                            w_all[munccut] * self.weight[munccut]
+                            * Astrf(self.pnu[munccut], norm=norm, gamma=gamma, fraction=fraction[1])
+                            * self.tau_sample_exposure[s_id]
+                        )
+                        dweights[mucut] += (
+                            w_all[mucut] * self.weight[mucut]
+                            * Astrf(self.pnu[mucut], norm=norm, gamma=gamma, fraction=fraction[1])
                             * self.tau_sample_exposure[s_id]
                         )
 
